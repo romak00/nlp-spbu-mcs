@@ -145,7 +145,15 @@ def count_pairs(data: List[List[int]]) -> Dict[Tuple[int, int], int]:
     >>> count_pairs(data)
     {(1, 2): 2, (2, 3): 2, (3, 4): 1, (2, 2): 1}
     """
-    <YOUR CODE HERE>
+    cnt = {}
+    for l in data:
+        for i, j in zip(l[:-1], l[1:]):
+            if (i, j) in cnt:
+                cnt[(i, j)]+=1
+            else:
+                cnt[(i, j)] = 1
+    return cnt
+            
 
 
 def merge(numbers: List[int], pair: Tuple[int, int], idx: int) -> List[int]:
@@ -181,7 +189,15 @@ def merge(numbers: List[int], pair: Tuple[int, int], idx: int) -> List[int]:
     >>> merge([0, 0, 0, 1], (0, 0), 2)
     [2, 0, 1]
     """
-    <YOUR CODE HERE>
+    end = len(numbers) - 1
+    i = 0
+    while i < end:
+        if numbers[i] == pair[0] and numbers[i+1] == pair[1]:
+            numbers[i] = idx
+            numbers.pop(i+1)
+            end -= 1
+        i += 1
+    return numbers
 
 
 class BpeTokenizer(ByteTokenizer):
@@ -266,8 +282,8 @@ class BpeTokenizer(ByteTokenizer):
 
         for _ in progress_bar:
             # Находим наиболее частотную пару токенов для склеивания в один токен
-            cnt = count_pairs(<YOUR CODE HERE>)
-            pair = <YOUR CODE HERE>
+            cnt = count_pairs(list_of_ids)
+            pair = max(cnt, key=cnt.get)
             freq = cnt[pair]
             progress_bar.set_description(f'pair={pair}, freq={freq}')
 
@@ -281,7 +297,7 @@ class BpeTokenizer(ByteTokenizer):
 
             # Обновляем токенизацию для наших тренировочных текстов с учетом нового токена
             for i, ids in enumerate(list_of_ids):
-                list_of_ids[i] = merge(<YOUR CODE HERE>)
+                list_of_ids[i] = merge(ids, pair, new_idx)
 
     def encode(self, text: str) -> List[int]:
         """
@@ -299,13 +315,11 @@ class BpeTokenizer(ByteTokenizer):
         """
         # Формируем исходный список номеров токенов для данного текста (изначально это байты в кодировке utf-8)
         ids = list(text.encode('utf-8'))
-
+        
         # Последовательно применяем таблицу склеиваний в том порядке, в котором добавлялись токены в словарь
-        while len(ids) > 1:
-            cnt = count_pairs(<YOUR CODE HERE>)
-            pair = <YOUR CODE HERE>
-            if pair not in self.merges:
+        for pair, idx in sorted(self.merges.items(), key=lambda item: item[1]):   # Заменил на такой код, так будто бы проще и логика работы сохраняется
+            if len(ids) <= 1:
                 break
-            idx = self.merges[pair]
-            ids = merge(<YOUR CODE HERE>)
+            ids = merge(ids, pair, idx)
         return ids
+    
