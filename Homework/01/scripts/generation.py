@@ -80,7 +80,7 @@ def generate(
                     # Выбираем top-k наиболее вероятных токенов. Используйте np.argpartition(...)
                     ids = np.argpartition(logits, -top_k)[-top_k:]
                     p = p[ids] / p[ids].sum()
-                new_token = np.random.choice(ids[0], p=p[0])
+                new_token = np.random.choice(ids.flatten(), p=p.flatten())
 
         if new_token == tokenizer.eos_token_id:
             break
