@@ -1,3 +1,5 @@
+import torch
+from scripts.compute_reward import compute_reward
 def generate_with_reward_guidance(
         main_model, main_tokenizer,
         reward_model, reward_tokenizer,
@@ -23,6 +25,18 @@ def generate_with_reward_guidance(
     str: The generated text sample with the highest reward score.
     """
 
-    # <YOUR CODE HERE>
+    inputs = main_tokenizer(["This movie is"] * N, return_tensors='pt').to(device)
+    samples = []
 
-    raise NotImplementedError
+    for candidate in main_model.generate(**inputs, max_new_tokens=50, do_sample=True):
+      sample = main_tokenizer.decode(candidate.flatten().cpu().numpy().tolist())
+      # print("Sample:", sample)
+      samples.append(sample)
+
+    with torch.no_grad():
+        rewards = compute_reward(reward_model, reward_tokenizer, samples)
+
+    max_index = rewards.argmax().item()
+    best_sample = samples[max_index]
+
+    return best_sample

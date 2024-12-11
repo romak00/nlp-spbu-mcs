@@ -18,8 +18,12 @@ def compute_reward(reward_model, reward_tokenizer, texts: list[str], device='cpu
     >>> compute_reward(my_reward_model, my_reward_tokenizer, ["text1", "text2"])
     tensor([ 5.1836, -4.8438], device='cpu')
     """
-    raise NotImplementedError
+    inputs = reward_tokenizer(texts, return_tensors='pt', padding=True, truncation=True).to(device)
 
-    # <YOUR CODE HERE>
     with no_grad():
-        # <YOUR CODE HERE>
+        logits = reward_model(**inputs).logits
+        
+    rewards = logits[:, 0]
+    print(rewards.shape)
+  
+    return rewards
