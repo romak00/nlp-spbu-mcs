@@ -8,9 +8,18 @@ def create_prompt(sample: dict) -> str:
     Returns:
         str: A formatted string prompt for the multiple choice question.
     """
-    <ВАШ КОД ЗДЕСЬ>
+    
+    prompt = (
+        f"The following are multiple choice questions (with answers) about {sample['subject']}.\n"
+        f"{sample['question']}\n"
+        f"A. {sample['choices'][0]}\n"
+        f"B. {sample['choices'][1]}\n"
+        f"C. {sample['choices'][2]}\n"
+        f"D. {sample['choices'][3]}\n"
+        f"Answer:"
+    )
 
-    return ...
+    return prompt
 
 
 def create_prompt_with_examples(sample: dict, examples: list, add_full_example: bool = False) -> str:
@@ -25,6 +34,28 @@ def create_prompt_with_examples(sample: dict, examples: list, add_full_example: 
     Returns:
         str: A formatted string prompt for the multiple choice question with 5 examples.
     """
-    <ВАШ КОД ЗДЕСЬ>
+    prompt = ""
+    for i in range(0, 5):
+        full = f". {examples[i]['choices'][examples[i]['answer']]}." if add_full_example else ""
+        example = (
+            f"The following are multiple choice questions (with answers) about {examples[i]['subject']}.\n"
+            f"{examples[i]['question']}\n"
+            f"A. {examples[i]['choices'][0]}\n"
+            f"B. {examples[i]['choices'][1]}\n"
+            f"C. {examples[i]['choices'][2]}\n"
+            f"D. {examples[i]['choices'][3]}\n"
+            f"Answer: {chr(examples[i]['answer'] + 65)}"+full+"\n\n"
+        )
+        prompt += example
+    smpl = (
+        f"The following are multiple choice questions (with answers) about {sample['subject']}.\n"
+        f"{sample['question']}\n"
+        f"A. {sample['choices'][0]}\n"
+        f"B. {sample['choices'][1]}\n"
+        f"C. {sample['choices'][2]}\n"
+        f"D. {sample['choices'][3]}\n"
+        f"Answer:"
+    )
+    prompt += smpl
 
-    return <ВАШ КОД ЗДЕСЬ>
+    return prompt
