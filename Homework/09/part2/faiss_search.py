@@ -17,7 +17,7 @@ class FAISSSearcher:
 
     def build_index(self, documents: List[Document]) -> None:
         """
-        TODO: Реализовать создание FAISS индекса
+        Реализовать создание FAISS индекса
         
         1. Сохранить документы
         2. Получить эмбеддинги через model.encode()
@@ -28,46 +28,85 @@ class FAISSSearcher:
             - Обучить индекс (train)
             - Добавить векторы (add)
         """
-        pass
+        self.documents = documents
+        texts = [f"{doc.title} {doc.text}" for doc in documents]
+        embeddings = self.model.encode(texts)
+        faiss.normalize_L2(embeddings)
+        quantizer = faiss.IndexFlatIP(self.dimension)
+        self.index = faiss.IndexIVFFlat(quantizer, self.dimension, 1)
+        self.index.train(embeddings)
+        self.index.add(embeddings)
 
     def save(self, path: str) -> None:
         """
-        TODO: Реализовать сохранение индекса
+        Реализовать сохранение индекса
         
         1. Сохранить в pickle:
             - documents
             - индекс (faiss.serialize_index)
         """
-        pass
+        with open(path, 'wb') as f:
+            ind_ser = faiss.serialize_index(self.index)
+            pickle.dump({'documents': self.documents, 'index': ind_ser}, f)
 
     def load(self, path: str) -> None:
         """
-        TODO: Реализовать загрузку индекса
+        Реализовать загрузку индекса
         
         1. Загрузить из pickle:
             - documents
             - индекс (faiss.deserialize_index)
         """
-        pass
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+            self.documents = data['documents']
+            self.index = faiss.deserialize_index(data['index'])
 
     def search(self, query: str, top_k: int = 5) -> List[SearchResult]:
         """
-        TODO: Реализовать поиск
+        Реализовать поиск
         
         1. Получить эмбеддинг запроса
         2. Нормализовать вектор
         3. Искать через index.search()
         4. Вернуть найденные документы
         """
-        pass
+        query_embeddings = self.model.encode(query)
+        query_embeddings = np.expand_dims(query_embeddings, axis=0)
+        faiss.normalize_L2(query_embeddings)
+        D, I = self.index.search(query_embeddings, top_k)
+        top_docs: List[SearchResult] = []
+        for idx, i in enumerate(I.flatten()):
+            top_docs.append(SearchResult(
+                doc_id=self.documents[i].id,
+                score=D.flatten()[idx]/2,
+                title=self.documents[i].title,
+                text=self.documents[i].text
+            ))
+        return top_docs
 
     def batch_search(self, queries: List[str], top_k: int = 5) -> List[List[SearchResult]]:
         """
-        TODO: Реализовать batch-поиск
+        Реализовать batch-поиск
         
         1. Получить эмбеддинги всех запросов
         2. Нормализовать векторы
         3. Искать через index.search()
         4. Вернуть результаты для каждого запроса
         """
-        pass
+        query_embeddings = self.model.encode(queries)
+        faiss.normalize_L2(query_embeddings)
+        D, I = self.index.search(query_embeddings, top_k)
+        top_docs: List[List[SearchResult]] = []
+        top_docs_tmp: List[SearchResult] = []
+        for idx, query in enumerate(I):
+            for idy, i in enumerate(query):
+                top_docs_tmp.append(SearchResult(
+                    doc_id=self.documents[i].id,
+                    score=D[idx][idy]/2,
+                    title=self.documents[i].title,
+                    text=self.documents[i].text
+                ))
+            top_docs.append(top_docs_tmp)
+            top_docs_tmp = []
+        return top_docs
